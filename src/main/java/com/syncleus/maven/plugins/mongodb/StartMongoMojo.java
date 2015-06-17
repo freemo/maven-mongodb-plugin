@@ -21,10 +21,7 @@
  */
 package com.syncleus.maven.plugins.mongodb;
 
-import com.mongodb.CommandResult;
-import com.mongodb.DB;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoException;
+import com.mongodb.*;
 import com.syncleus.maven.plugins.mongodb.log.Loggers;
 import com.syncleus.maven.plugins.mongodb.log.Loggers.LoggingStyle;
 import de.flapdoodle.embed.mongo.*;
@@ -702,7 +699,8 @@ public class StartMongoMojo extends AbstractMongoMojo {
 
         final MongoClient mongoClient;
         try {
-            mongoClient = new MongoClient("localhost", getPort());
+//            mongoClient = new MongoClient(Arrays.asList(new ServerAddress("localhost", getPort())));
+            mongoClient = new MongoClient(new ServerAddress("localhost", getPort()));
         } catch (final UnknownHostException e) {
             throw new MojoExecutionException("Unable to connect to mongo instance", e);
         }
@@ -737,7 +735,13 @@ public class StartMongoMojo extends AbstractMongoMojo {
         final CommandResult result;
         try {
             final String evalString = "(function() {" + instructions.toString() + "})();";
-            result = db.doEval(evalString, new Object[0]);
+            db.slaveOk();
+            db.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
+            db.setReadPreference(ReadPreference.secondaryPreferred());
+//            result = db.doEval(evalString, new Object[0]);
+            result = db.command(new BasicDBObject("replSetInitiate", "{_id : \"rs0\", version : 1, members : [{_id : 0, host : \"localhost:27017\"}],settings : {getLastErrorModes : { ACKNOWLEDGED : {}}}}"));
+            if(true)
+                return;
         } catch (final MongoException e) {
             throw new MojoExecutionException("Unable to execute file with name '" + scriptFile.getName() + "'", e);
         }
