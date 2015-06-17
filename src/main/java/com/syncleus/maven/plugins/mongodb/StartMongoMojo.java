@@ -739,7 +739,20 @@ public class StartMongoMojo extends AbstractMongoMojo {
             db.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
             db.setReadPreference(ReadPreference.secondaryPreferred());
 //            result = db.doEval(evalString, new Object[0]);
-            result = db.command(new BasicDBObject("replSetInitiate", "{_id : \"rs0\", version : 1, members : [{_id : 0, host : \"localhost:27017\"}],settings : {getLastErrorModes : { ACKNOWLEDGED : {}}}}"));
+            BasicDBList membersList = new BasicDBList();
+            BasicDBObject onlyMember = new BasicDBObject();
+            onlyMember.put("_id", 0);
+            onlyMember.put("host", "localhost:27017");
+            membersList.add(onlyMember);
+            BasicDBObject initRoot = new BasicDBObject();
+            initRoot.put("_id", "rs0");
+            initRoot.put("version", 1);
+            initRoot.put("members", membersList);
+            initRoot.put("settings", new BasicDBObject("getLastErrorModes", new BasicDBObject("ACKNOWLEDGED", new BasicDBObject())));
+            BasicDBObject init = new BasicDBObject("replSetInitiate", initRoot);
+            System.out.println("Initiating: " + init.toString());
+//            result = db.command(new BasicDBObject("replSetInitiate", "{_id : \"rs0\", version : 1, members : [{_id : 0, host : \"localhost:27017\"}],settings : {getLastErrorModes : { ACKNOWLEDGED : {}}}}"));
+            result = db.command(init);
             if(true)
                 return;
         } catch (final MongoException e) {
