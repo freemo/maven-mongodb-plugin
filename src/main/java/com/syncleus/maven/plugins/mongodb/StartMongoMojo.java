@@ -384,6 +384,7 @@ public class StartMongoMojo extends AbstractMongoMojo {
             throw new MojoExecutionException("Unable to start the mongod", e);
         }
 
+        startReplSetInitiate();
         startImport();
         startInitialization();
 
@@ -676,12 +677,13 @@ public class StartMongoMojo extends AbstractMongoMojo {
 
     }
 
+
     private void startInitialization() throws MojoExecutionException, MojoFailureException {
         if (initalizations == null || initalizations.length == 0)
             return;
 
         for (final InitializerConfig initConfig : this.initalizations) {
-            final DB db = connectToMongoAndGetDatabase(initConfig.getDatabaseName());
+            final DB db = connectToMongoAndGetDB(initConfig.getDatabaseName());
 
             for (final File scriptFile : initConfig.getScripts()) {
                 if (scriptFile.isDirectory())
@@ -692,7 +694,8 @@ public class StartMongoMojo extends AbstractMongoMojo {
         }
     }
 
-    DB connectToMongoAndGetDatabase(final String databaseName) throws MojoExecutionException {
+    @Deprecated
+    DB connectToMongoAndGetDB(final String databaseName) throws MojoExecutionException {
         if (databaseName == null || databaseName.trim().length() == 0) {
             throw new MojoExecutionException("Database name is missing");
         }
@@ -702,6 +705,7 @@ public class StartMongoMojo extends AbstractMongoMojo {
         return mongoClient.getDB(databaseName);
     }
 
+    @Deprecated
     private void processScriptDirectory(final DB db, final File scriptDirectory) throws MojoExecutionException {
         final File[] files = scriptDirectory.listFiles();
         getLog().info("Folder " + scriptDirectory.getAbsolutePath() + " contains " + files.length + " file(s):");
@@ -711,6 +715,7 @@ public class StartMongoMojo extends AbstractMongoMojo {
         getLog().info("Data initialized with success");
     }
 
+    @Deprecated
     private void processScriptFile(final DB db, final File scriptFile) throws MojoExecutionException {
         Scanner scanner = null;
         final StringBuilder instructions = new StringBuilder();
@@ -729,26 +734,7 @@ public class StartMongoMojo extends AbstractMongoMojo {
         final CommandResult result;
         try {
             final String evalString = "(function() {" + instructions.toString() + "})();";
-            db.slaveOk();
-            db.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
-            db.setReadPreference(ReadPreference.secondaryPreferred());
-//            result = db.doEval(evalString, new Object[0]);
-            BasicDBList membersList = new BasicDBList();
-            BasicDBObject onlyMember = new BasicDBObject();
-            onlyMember.put("_id", 0);
-            onlyMember.put("host", "localhost:27017");
-            membersList.add(onlyMember);
-            BasicDBObject initRoot = new BasicDBObject();
-            initRoot.put("_id", "rs0");
-            initRoot.put("version", 1);
-            initRoot.put("members", membersList);
-            initRoot.put("settings", new BasicDBObject("getLastErrorModes", new BasicDBObject("ACKNOWLEDGED", new BasicDBObject())));
-            BasicDBObject init = new BasicDBObject("replSetInitiate", initRoot);
-            System.out.println("Initiating: " + init.toString());
-//            result = db.command(new BasicDBObject("replSetInitiate", "{_id : \"rs0\", version : 1, members : [{_id : 0, host : \"localhost:27017\"}],settings : {getLastErrorModes : { ACKNOWLEDGED : {}}}}"));
-            result = db.command(init);
-            if(true)
-                return;
+            result = db.doEval(evalString, new Object[0]);
         } catch (final MongoException e) {
             throw new MojoExecutionException("Unable to execute file with name '" + scriptFile.getName() + "'", e);
         }
@@ -757,5 +743,29 @@ public class StartMongoMojo extends AbstractMongoMojo {
             throw new MojoExecutionException("Error while executing instructions from file '" + scriptFile.getName() + "': " + result.getErrorMessage(), result.getException());
         }
         getLog().info("- file " + scriptFile.getName() + " parsed successfully");
+    }
+
+    private void startReplSetInitiate() throws MojoExecutionException, MojoFailureException {
+        final MongoClient mongoClient = new MongoClient(new ServerAddress("localhost", getPort()));
+        getLog().info("Connected to MongoDB");
+        final DB db = mongoClient.getDB("admin");
+
+        db.slaveOk();
+        db.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
+        db.setReadPreference(ReadPreference.secondaryPreferred());
+        BasicDBList membersList = new BasicDBList();
+        BasicDBObject onlyMember = new BasicDBObject();
+        onlyMember.put("_id", 0);
+        onlyMember.put("host", "localhost:27017");
+        membersList.add(onlyMember);
+        BasicDBObject initRoot = new BasicDBObject();
+        initRoot.put("_id", "rs0");
+        initRoot.put("version", 1);
+        initRoot.put("members", membersList);
+        initRoot.put("settings", new BasicDBObject("getLastErrorModes", new BasicDBObject("ACKNOWLEDGED", new BasicDBObject())));
+        BasicDBObject init = new BasicDBObject("replSetInitiate", initRoot);
+        getLog().info("Initiating replSet: " + init.toString());
+
+        db.command(init);
     }
 }
