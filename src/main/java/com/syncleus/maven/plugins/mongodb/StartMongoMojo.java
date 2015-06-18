@@ -282,6 +282,9 @@ public class StartMongoMojo extends AbstractMongoMojo {
     @Parameter
     private InitializerConfig[] initalizations;
 
+    @Parameter
+    private ReplSetInitiateConfig replSetInitiate;
+
     /**
      * Not a mojo configuration parameter, this is used internally.
      */
@@ -746,23 +749,14 @@ public class StartMongoMojo extends AbstractMongoMojo {
     }
 
     private void startReplSetInitiate() throws MojoExecutionException, MojoFailureException {
+        if(replSetInitiate == null)
+            return;
+
         final MongoClient mongoClient = new MongoClient(new ServerAddress("localhost", getPort()));
         getLog().info("Connected to MongoDB");
         final DB db = mongoClient.getDB("admin");
 
-        BasicDBList membersList = new BasicDBList();
-        BasicDBObject onlyMember = new BasicDBObject();
-        onlyMember.put("_id", 0);
-        onlyMember.put("host", "localhost:27017");
-        membersList.add(onlyMember);
-        BasicDBObject initRoot = new BasicDBObject();
-        initRoot.put("_id", "rs0");
-        initRoot.put("version", 1);
-        initRoot.put("members", membersList);
-        initRoot.put("settings", new BasicDBObject("getLastErrorModes", new BasicDBObject("ACKNOWLEDGED", new BasicDBObject())));
-        BasicDBObject init = new BasicDBObject("replSetInitiate", initRoot);
-        getLog().info("Initiating replSet: " + init.toString());
-
-        db.command(init);
+        getLog().info("would have initated: " + replSetInitiate.makeCommand().toString());
+        db.command(new BasicDBObject("replSetInitiate", replSetInitiate.makeCommand()));
     }
 }
