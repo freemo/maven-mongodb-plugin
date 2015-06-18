@@ -22,16 +22,9 @@ import org.apache.maven.plugins.annotations.Parameter;
 import java.util.HashMap;
 
 public class ReplSetInitiateConfig {
-    @Parameter(name = "_id")
     private String _id;
-
-    @Parameter
     private Integer version;
-
-    @Parameter
     private MembersConfig[] members;
-
-    @Parameter
     private SettingsConfig settings;
 
     public ReplSetInitiateConfig() {
@@ -78,31 +71,14 @@ public class ReplSetInitiateConfig {
     }
 
     public static class MembersConfig {
-        @Parameter(name = "_id")
         private Integer _id;
-
-        @Parameter
         private String host;
-
-        @Parameter
         private Boolean arbiterOnly;
-
-        @Parameter
         private Boolean buildIndexes;
-
-        @Parameter
         private Boolean hidden;
-
-        @Parameter
         private Integer priority;
-
-        @Parameter
         private HashMap<String, String> tags;
-
-        @Parameter
         private Integer slaveDelay;
-
-        @Parameter
         private Integer votes;
 
         public MembersConfig() {
@@ -179,13 +155,8 @@ public class ReplSetInitiateConfig {
     }
 
     public static class SettingsConfig {
-        @Parameter
         private Boolean chainingAllowed;
-
-        @Parameter
         private Integer heartbeatTimeoutSecs;
-
-        @Parameter
         private GetLastErrorModesConfig[] getLastErrorModes;
 
         //TODO: implement getLastErrorDefaults
@@ -228,10 +199,7 @@ public class ReplSetInitiateConfig {
         }
 
         public static class GetLastErrorModesConfig {
-            @Parameter(required = true)
             private String writeConcern;
-
-            @Parameter
             private HashMap<String, String> tags;
 
             public GetLastErrorModesConfig() {
