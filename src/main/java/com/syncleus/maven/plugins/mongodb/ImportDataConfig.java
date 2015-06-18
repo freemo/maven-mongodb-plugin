@@ -16,13 +16,26 @@
  */
 package com.syncleus.maven.plugins.mongodb;
 
+import org.apache.maven.plugins.annotations.Parameter;
+
 public class ImportDataConfig {
+    @Parameter
     private String database;
+
+    @Parameter(required = true)
     private String collection;
+
+    @Parameter(required = true)
     private String file;
-    private Boolean dropOnImport = true;
-    private Boolean upsertOnImport = true;
-    private long timeout = 200000;
+
+    @Parameter(defaultValue = "true")
+    private Boolean dropOnImport;
+
+    @Parameter(defaultValue = "true")
+    private Boolean upsertOnImport;
+
+    @Parameter(defaultValue =  "200000")
+    private long timeout;
 
     public ImportDataConfig() {
     }

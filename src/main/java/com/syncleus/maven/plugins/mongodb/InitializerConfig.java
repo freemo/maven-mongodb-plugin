@@ -16,11 +16,15 @@
  */
 package com.syncleus.maven.plugins.mongodb;
 
+import org.apache.maven.plugins.annotations.Parameter;
+
 import java.io.File;
 
 public class InitializerConfig {
+    @Parameter(required = true)
     private File[] scripts;
 
+    @Parameter(required = true)
     private String databaseName;
 
     public InitializerConfig() {
