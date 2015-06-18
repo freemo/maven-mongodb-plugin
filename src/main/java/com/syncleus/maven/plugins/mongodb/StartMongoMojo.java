@@ -697,13 +697,7 @@ public class StartMongoMojo extends AbstractMongoMojo {
             throw new MojoExecutionException("Database name is missing");
         }
 
-        final MongoClient mongoClient;
-        try {
-//            mongoClient = new MongoClient(Arrays.asList(new ServerAddress("localhost", getPort())));
-            mongoClient = new MongoClient(new ServerAddress("localhost", getPort()));
-        } catch (final UnknownHostException e) {
-            throw new MojoExecutionException("Unable to connect to mongo instance", e);
-        }
+        final MongoClient mongoClient = new MongoClient(new ServerAddress("localhost", getPort()));
         getLog().info("Connected to MongoDB");
         return mongoClient.getDB(databaseName);
     }
