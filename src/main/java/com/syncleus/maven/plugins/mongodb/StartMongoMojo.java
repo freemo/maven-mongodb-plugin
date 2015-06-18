@@ -750,7 +750,6 @@ public class StartMongoMojo extends AbstractMongoMojo {
         getLog().info("Connected to MongoDB");
         final DB db = mongoClient.getDB("admin");
 
-        db.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
         db.setReadPreference(ReadPreference.secondaryPreferred());
         BasicDBList membersList = new BasicDBList();
         BasicDBObject onlyMember = new BasicDBObject();
